@@ -24,7 +24,7 @@ tf.keras.backend.set_session(tf.Session(config=config))
 ###################################
 '''
 
-frame_x= np.random.randint(nextFrameModel.last_frames-nextFrameModel.number_of_frames-1, size=nextFrameModel.number_of_batches)
+frame_x= np.random.randint(nextFrameModel.last_frames_X[0]-nextFrameModel.number_of_frames-1, size=nextFrameModel.number_of_batches)
 print(str(frame_x[0]).zfill(4))
 
 # Load Images
@@ -34,9 +34,9 @@ big_array03 = []
 for j in range(nextFrameModel.number_of_batches):
     big_array = []
     for i in range(nextFrameModel.number_of_frames):
-        big_array.append(np.array(Image.open("video/frames/frame-"+str(frame_x[j]+i).zfill(4)+".bmp")))
+        big_array.append(np.array(Image.open("video/framesX/frame-"+str(frame_x[j]+i).zfill(4)+".bmp")))
     big_array02.append(big_array)
-    big_array03.append([np.array(Image.open("video/frames/frame-"+str(frame_x[j]+nextFrameModel.number_of_frames).zfill(4)+".bmp"))])
+    big_array03.append([np.array(Image.open("video/framesX/frame-"+str(frame_x[j]+nextFrameModel.number_of_frames).zfill(4)+".bmp"))])
     #big_array04.append([np.array(Image.open("video/frames/frame-"+str(frame_x[j]+nextFrameModel.number_of_frames-1).zfill(4)+".bmp"))])
 
 inFrames = np.array(big_array02)

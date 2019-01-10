@@ -5,9 +5,8 @@ from tensorflow.keras import backend as K
 image_width=720
 image_height=720
 number_of_frames = 10
-#last_frames = 360
-last_frames = 687
-#last_frames = 487
+last_frames = [360,487,818]
+last_frames_X = [687]
 
 number_of_batches = 100
 
@@ -17,16 +16,18 @@ conv02_factor=5
 horizontal_axis=2
 vertical_axis=1
 
+dropout_rate=0.5
+
 
 def getBase(x):
     return x
 
 def customLossCombine(denseR00,denseG00,denseB00,denseR01,denseG01,denseB01):
     def nextFrameLoss(y_true, y_pred):
-        return (64 ^ 2) * K.sum(tf.keras.losses.mean_squared_error(denseR00, denseG00) +
+        return (128) * K.sum(tf.keras.losses.mean_squared_error(denseR00, denseG00) +
                      tf.keras.losses.mean_squared_error(denseG00, denseB00) +
                      tf.keras.losses.mean_squared_error(denseB00, denseR00))  \
-               + (64 ^ 4) * K.sum(tf.keras.losses.mean_squared_error(denseR01, denseG01) +
+               + (1024) * K.sum(tf.keras.losses.mean_squared_error(denseR01, denseG01) +
                      tf.keras.losses.mean_squared_error(denseG01, denseB01) +
                      tf.keras.losses.mean_squared_error(denseB01, denseR01))  \
                + tf.keras.losses.mean_squared_error(y_true, y_pred)
@@ -48,8 +49,9 @@ def compile():
     print ("avgR02 shape==========")
     print (avgR02.shape)
     reshapeR01 = tf.keras.layers.Reshape(target_shape=(int(number_of_frames*(image_width/(conv01_factor*conv02_factor))*(image_height/(conv01_factor*conv02_factor))),))(avgR02)
-    denseR00=layers.Dense(64,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform', bias_initializer = 'ones')(reshapeR01)
-    denseR01=layers.Dense(8,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform', bias_initializer = 'ones')(denseR00)
+    denseR00=layers.Dense(512,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform')(reshapeR01)
+    dropoutR01=layers.Dropout(rate=dropout_rate) (denseR00)
+    denseR01=layers.Dense(64,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform')(dropoutR01)
 
     #G model
     inputG01 = tf.keras.Input(shape=(number_of_frames,720 ,720 , 1,))
@@ -57,8 +59,9 @@ def compile():
     avgG01 = layers.AvgPool3D(pool_size=(1,conv01_factor,conv01_factor),padding="same")(inputG01)
     avgG02 = layers.AvgPool3D(pool_size=(1,conv02_factor,conv02_factor),padding="same")(avgG01)
     reshapeG01 = tf.keras.layers.Reshape(target_shape=(int(number_of_frames*(image_width/(conv01_factor*conv02_factor))*(image_height/(conv01_factor*conv02_factor))),))(avgG02)
-    denseG00=layers.Dense(64,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform', bias_initializer = 'ones')(reshapeG01)
-    denseG01=layers.Dense(8,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform', bias_initializer = 'ones')(denseG00)
+    denseG00=layers.Dense(512,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform')(reshapeG01)
+    dropoutG01=layers.Dropout(rate=dropout_rate) (denseG00)
+    denseG01=layers.Dense(64,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform')(dropoutG01)
 
     #B model
     inputB01 = tf.keras.Input(shape=(number_of_frames,720 ,720 , 1,))
@@ -66,8 +69,9 @@ def compile():
     avgB01 = layers.AvgPool3D(pool_size=(1,conv01_factor,conv01_factor),padding="same")(inputB01)
     avgB02 = layers.AvgPool3D(pool_size=(1,conv02_factor,conv02_factor),padding="same")(avgB01)
     reshapeB01 = tf.keras.layers.Reshape(target_shape=(int(number_of_frames*(image_width/(conv01_factor*conv02_factor))*(image_height/(conv01_factor*conv02_factor))),))(avgB02)
-    denseB00=layers.Dense(64,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform', bias_initializer = 'ones')(reshapeB01)
-    denseB01=layers.Dense(8,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform', bias_initializer = 'ones')(denseB00)
+    denseB00=layers.Dense(512,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform')(reshapeB01)
+    dropoutB01=layers.Dropout(rate=dropout_rate) (denseB00)
+    denseB01=layers.Dense(64,activation="relu", kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=1.0), kernel_initializer='random_uniform')(dropoutB01)
 
     '''
     input02 = tf.keras.Input(shape=(1,image_width,image_height,3,))
@@ -85,9 +89,25 @@ def compile():
 
     merge01=tf.keras.layers.concatenate([denseR01,denseG01,denseB01,denseR00,denseG00,denseB00])
 
-    denseOut00=layers.Dense(32,activation="relu", kernel_initializer='random_uniform', bias_initializer = 'ones')(merge01)
-    denseOut01=layers.Dense(64,activation="relu", kernel_initializer='random_uniform', bias_initializer = 'ones')(denseOut00)
-    denseOut02=layers.Dense(128,activation="relu", kernel_initializer='random_uniform', bias_initializer = 'ones')(denseOut01)
+    denseOut00=layers.Dense(192,activation="relu", kernel_initializer='random_uniform')(merge01)
+    dropout00=tf.keras.layers.Dropout(rate=dropout_rate) (denseOut00)
+    denseOut01=layers.Dense(640,activation="relu", kernel_initializer='random_uniform')(dropout00)
+    dropout01=tf.keras.layers.Dropout(rate=dropout_rate) (denseOut01)
+    denseOut02=layers.Dense(3200,activation="relu", kernel_initializer='random_uniform')(dropout01)
+    dropout02=tf.keras.layers.Dropout(rate=dropout_rate) (denseOut02)
+    denseOut03=layers.Dense(15552,activation="relu", kernel_initializer='random_uniform')(dropout02)
+    reshape03=tf.keras.layers.Reshape(target_shape=(1,int(image_width/(conv01_factor*conv02_factor)),int(image_height/(conv01_factor*conv02_factor)),3))(denseOut03)
+    dense05=layers.UpSampling3D(size=(1,conv02_factor,conv02_factor))(reshape03)
+    dense06=layers.UpSampling3D(size=(1,conv01_factor,conv01_factor))(dense05)
+
+    print("reshape03")
+    print(reshape03.shape)
+    print("dense05")
+    print(dense05.shape)
+    print("dense06")
+    print(dense06.shape)
+
+    '''
     dense04 = tf.keras.layers.Dense(image_width*image_height*3,activation="relu",
                                     kernel_constraint=tf.keras.constraints.MinMaxNorm(min_value=0, max_value=255), kernel_initializer='random_uniform', bias_initializer = 'ones')(denseOut02)
     print("dense04")
@@ -96,8 +116,9 @@ def compile():
     reshape02 = tf.keras.layers.Reshape(target_shape=(1,image_width,image_height,3))(dense04)
     print("reshape02")
     print(reshape02.shape)
+    '''
 
-    model = tf.keras.Model(inputs=[inputR01,inputG01,inputB01], outputs=reshape02)
+    model = tf.keras.Model(inputs=[inputR01,inputG01,inputB01], outputs=dense06)
     #model.compile(loss='mean_squared_error', optimizer='adam')
     #model.compile(loss='mean_absolute_error', optimizer='adam')
     #model.compile(loss='mean_squared_logarithmic_error', optimizer='adam')

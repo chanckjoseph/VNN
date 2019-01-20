@@ -43,17 +43,17 @@ inFrames = np.array(big_array02)
 outFrames = np.array(big_array03)
 #lastFrame = np.array(big_array04)
 
-inFramesR = inFrames[:, :, :, :, [0]]
-inFramesG = inFrames[:, :, :, :, [1]]
-inFramesB = inFrames[:, :, :, :, [2]]
+inFramesR = np.squeeze(inFrames[:, :, :, :, [0]], axis=4)
+inFramesR_new = np.squeeze(np.stack(np.split(inFramesR,inFramesR.shape[1], axis=1), axis=-1), axis=1)
+inFramesG = np.squeeze(inFrames[:, :, :, :, [1]], axis=4)
+inFramesG_new = np.squeeze(np.stack(np.split(inFramesG,inFramesG.shape[1], axis=1), axis=-1), axis=1)
+inFramesB = np.squeeze(inFrames[:, :, :, :, [2]], axis=4)
+inFramesB_new = np.squeeze(np.stack(np.split(inFramesB,inFramesB.shape[1], axis=1), axis=-1), axis=1)
 
-print("in image shape-", inFrames.shape)
-print("out image shape-", outFrames.shape)
-#print("last image shape-", lastFrame.shape)
 
-ad = np.arange(nextFrameModel.image_width*nextFrameModel.image_height)
-ad = ad.reshape((nextFrameModel.image_width,nextFrameModel.image_height,1))
-print("address shape- ", ad.shape)
+#ad = np.arange(nextFrameModel.image_width*nextFrameModel.image_height)
+#ad = ad.reshape((nextFrameModel.image_width,nextFrameModel.image_height,1))
+#print("address shape- ", ad.shape)
 
 # Addressed image
 #big_array = []
@@ -131,9 +131,9 @@ model = tf.keras.Model(inputs=[inputR01,inputG01,inputB01,input02], outputs=merg
 model.compile(loss=customLoss(denseR02,denseG02,denseB02), optimizer='adam')
 '''
 
-dataR = np.array(inFramesR)
-dataG = np.array(inFramesG)
-dataB = np.array(inFramesB)
+dataR = np.array(inFramesR_new)
+dataG = np.array(inFramesG_new)
+dataB = np.array(inFramesB_new)
 
 print("dataR shape")
 print(dataR.dtype)

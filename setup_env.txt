@@ -3,9 +3,16 @@
 #Get Anaconda
 #create project VNN
 
+
 #install numpy package
 #install tensorflow package
 #install scikit-image
+#Open Anacoda Prompt
 #conda install av -c conda-forge -n VNN
 #conda install opencv -c conda-forge -n VNN
 #create project folder "saves"
+
+import tensorflow as tf
+hello = tf.constant('Hello, TensorFlow!')
+sess = tf.Session()
+print(sess.run(hello))
